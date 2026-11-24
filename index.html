@@ -1388,9 +1388,11 @@
     }
 
     // Segment Full Details & Reverse-Chronological Timeline Modal
-    function openSegmentFullDetailsModal() {
-      const seg = segments.find(s => s.id === selectedSegmentId);
+    function openSegmentFullDetailsModal(segId = null) {
+      const targetId = segId || selectedSegmentId;
+      const seg = segments.find(s => s.id === targetId);
       if (!seg) return;
+      selectedSegmentId = seg.id;
 
       document.getElementById('fullSegIdBadge').textContent = seg.id;
       document.getElementById('fullSegName').textContent = seg.name;
@@ -1825,6 +1827,7 @@
     function selectSegment(id) {
       const seg = segments.find(s => s.id === id);
       if (!seg) return;
+      selectedSegmentId = seg.id;
 
       if (polylines[id]) {
         const bounds = polylines[id].getBounds();
@@ -1848,11 +1851,30 @@
               <p class="text-xs mb-1"><b>Dimensions:</b> ${seg.dimensions} (${seg.crossArea || '—'})</p>
               <p class="text-xs mb-1"><b>Length:</b> ${seg.length}</p>
               <p class="text-xs text-slate-500 italic mb-2">"${seg.notes}"</p>
-              <button type="button" onclick="openSegmentFullDetailsModal()" class="w-full py-1.5 px-2 rounded-lg bg-cyan-600 text-white text-[11px] font-bold">View Full Details</button>
+              <button type="button" onclick="openSegmentFullDetailsModal('${seg.id}')" class="w-full py-1.5 px-2 rounded-lg bg-cyan-600 text-white text-[11px] font-bold">View Full Details</button>
             </div>
           `).openPopup();
         }
       } else {
+        const photos = getSegmentPhotos(seg);
+        const displayPhotos = photos.length > 0 ? photos : defaultSegmentPhotos(seg.id, seg.name);
+        if (polylines[id]) {
+          polylines[id].bindPopup(`
+            <div class="p-2 text-slate-800 max-w-[240px]">
+              <span class="text-[10px] font-bold text-cyan-600 block uppercase">${seg.id} • Official Register</span>
+              <h4 class="font-bold text-sm mb-1">${seg.name}</h4>
+              <div class="relative mb-2 group cursor-zoom-in" onclick="window.openSegmentLightboxById('${seg.id}', 0)">
+                <img src="${displayPhotos[0].url}" alt="${displayPhotos[0].caption}" class="w-full h-24 object-cover rounded-lg border border-slate-200" />
+                <span class="absolute bottom-1 right-1 px-1.5 py-0.5 rounded bg-slate-900/80 text-white text-[9px] font-bold">🔍 ${displayPhotos.length} Photo${displayPhotos.length > 1 ? 's' : ''}</span>
+              </div>
+              <p class="text-xs mb-1"><b>Status:</b> ${formatConditionLabel(seg.status)}</p>
+              <p class="text-xs mb-1"><b>Dimensions:</b> ${seg.dimensions} (${seg.crossArea || '—'})</p>
+              <p class="text-xs mb-1"><b>Length:</b> ${seg.length}</p>
+              <p class="text-xs text-slate-500 italic mb-2">"${seg.notes}"</p>
+              <button type="button" onclick="openSegmentFullDetailsModal('${seg.id}')" class="w-full py-1.5 px-2 rounded-lg bg-cyan-600 text-white text-[11px] font-bold">View Full Details</button>
+            </div>
+          `).openPopup();
+        }
         document.getElementById('editId').value = seg.id;
         document.getElementById('editSourceReportId').value = '';
         document.getElementById('editName').value = seg.name;
